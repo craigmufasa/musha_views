@@ -1,0 +1,233 @@
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+  Platform
+} from 'react-native';
+import { X, Maximize2, Minimize2 } from 'lucide-react-native';
+import { colors } from '@/constants/colors';
+import { TourRoom } from '@/types/property';
+
+interface TourViewerProps {
+  rooms: TourRoom[];
+  initialRoomId?: string;
+  onClose: () => void;
+}
+
+const { width } = Dimensions.get('window');
+
+export const TourViewer: React.FC<TourViewerProps> = ({ 
+  rooms, 
+  initialRoomId, 
+  onClose 
+}) => {
+  const [currentRoomId, setCurrentRoomId] = useState(initialRoomId || rooms[0].id);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  const currentRoom = rooms.find(room => room.id === currentRoomId) || rooms[0];
+  
+  // Get connected rooms
+  const connectedRooms = rooms.filter(room => 
+    currentRoom.connections.includes(room.id)
+  );
+
+  const navigateToRoom = (roomId: string) => {
+    setCurrentRoomId(roomId);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Position hotspots based on room connections
+  const getHotspotPosition = (index: number, total: number) => {
+    // Distribute hotspots evenly
+    const angle = (index / total) * 360;
+    const radius = 40; // % from center
+    
+    // Convert angle to radians and calculate position
+    const radians = (angle * Math.PI) / 180;
+    const x = 50 + radius * Math.cos(radians);
+    const y = 50 + radius * Math.sin(radians);
+    
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+    };
+  };
+
+  return (
+    <View style={[styles.container, isFullscreen && styles.fullscreenContainer]}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <X size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.roomName}>{currentRoom.name}</Text>
+        <TouchableOpacity onPress={toggleFullscreen} style={styles.fullscreenButton}>
+          {isFullscreen ? (
+            <Minimize2 size={24} color="white" />
+          ) : (
+            <Maximize2 size={24} color="white" />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.panoramaContainer}>
+        <Image
+          source={{ uri: currentRoom.panoramaImage }}
+          style={styles.panoramaImage}
+          resizeMode="cover"
+        />
+        
+        {/* Room navigation hotspots */}
+        {connectedRooms.map((room, index) => (
+          <TouchableOpacity
+            key={room.id}
+            style={[
+              styles.hotspot, 
+              getHotspotPosition(index, connectedRooms.length)
+            ]}
+            onPress={() => navigateToRoom(room.id)}
+          >
+            <View style={styles.hotspotInner}>
+              <Text style={styles.hotspotText}>{room.name}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Room selector */}
+      <View style={styles.roomSelector}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {rooms.map((room) => (
+            <TouchableOpacity
+              key={room.id}
+              style={[
+                styles.roomButton,
+                currentRoomId === room.id && styles.activeRoomButton
+              ]}
+              onPress={() => navigateToRoom(room.id)}
+            >
+              <Text 
+                style={[
+                  styles.roomButtonText,
+                  currentRoomId === room.id && styles.activeRoomButtonText
+                ]}
+              >
+                {room.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Instructions */}
+      <View style={styles.instructions}>
+        <Text style={styles.instructionsText}>
+          Tap on hotspots to move between rooms
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  fullscreenContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  closeButton: {
+    padding: 8,
+  },
+  fullscreenButton: {
+    padding: 8,
+  },
+  roomName: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  panoramaContainer: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  panoramaImage: {
+    width: '100%',
+    height: '100%',
+  },
+  hotspot: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Positions are set dynamically
+  },
+  hotspotInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 209, 178, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  hotspotText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+    position: 'absolute',
+    bottom: -20,
+    width: 80,
+    textAlign: 'center',
+  },
+  roomSelector: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  roomButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  activeRoomButton: {
+    backgroundColor: colors.secondary,
+  },
+  roomButtonText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  activeRoomButtonText: {
+    fontWeight: '600',
+  },
+  instructions: {
+    padding: 16,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  instructionsText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+  },
+});
