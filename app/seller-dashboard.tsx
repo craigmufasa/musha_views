@@ -114,24 +114,6 @@ export default function SellerDashboardScreen() {
           
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <MessageSquare size={20} color={colors.primary} />
-              <Text style={styles.menuItemText}>Messages</Text>
-            </View>
-            <View style={styles.badgeContainer}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
-              <Calendar size={20} color={colors.primary} />
-              <Text style={styles.menuItemText}>Schedule Viewings</Text>
-            </View>
-            <ChevronRight size={20} color={colors.textLight} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuItemLeft}>
               <BarChart3 size={20} color={colors.primary} />
               <Text style={styles.menuItemText}>Analytics</Text>
             </View>
